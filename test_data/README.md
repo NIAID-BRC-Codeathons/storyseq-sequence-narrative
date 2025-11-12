@@ -19,13 +19,13 @@ From BV-BRC AMR Workshop: https://www.bv-brc.org/workspace/ARWattam@patricbrc.or
       * [gene/nuc/streptococcus_pneumoniae.PBP1a.fna](gene/nuc/streptococcus_pneumoniae.PBP1a.fna)
   * genes identified as being important targets by tetracycline resistance in Streptococcus pneumoniae
     * TetM
-      * []()
-      * []()
+      * [gene/prot/streptococcus_pneumoniae.TetM.faa](gene/prot/streptococcus_pneumoniae.TetM.faa)
+      * [gene/nuc/streptococcus_pneumoniae.TetM.fna](gene/nuc/streptococcus_pneumoniae.TetM.fna)
 
 ## Random Genes 
 
 * FCGR2A 
   * Human
-    * 
-  * Mouse
-    * 
+    * [gene/prot/human.fcgr2a.faa](gene/prot/human.fcgr2a.faa)
+  * Mouse homolog
+    * [gene/prot/mouse.fcgr2a.faa](gene/prot/mouse.fcgr2a.faa)
