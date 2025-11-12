@@ -1,0 +1,52 @@
+"""Data models for story-seq."""
+
+from typing import List, Optional
+from pydantic import BaseModel, Field
+
+
+class BlastHit(BaseModel):
+    """Model for a single BLAST hit."""
+    
+    query_id: str = Field(description="Query sequence identifier")
+    subject_id: str = Field(description="Subject sequence identifier")
+    identity: float = Field(ge=0, le=100, description="Percent identity")
+    alignment_length: int = Field(gt=0, description="Alignment length")
+    evalue: float = Field(ge=0, description="E-value")
+    bit_score: float = Field(ge=0, description="Bit score")
+    query_start: int = Field(gt=0, description="Query sequence start position")
+    query_end: int = Field(gt=0, description="Query sequence end position")
+    subject_start: int = Field(gt=0, description="Subject sequence start position")
+    subject_end: int = Field(gt=0, description="Subject sequence end position")
+
+
+class BlastResult(BaseModel):
+    """Model for BLAST search results."""
+    
+    query_id: str = Field(description="Query sequence identifier")
+    query_length: int = Field(gt=0, description="Length of query sequence")
+    hits: List[BlastHit] = Field(default_factory=list, description="List of BLAST hits")
+    database: str = Field(description="Database searched")
+    
+    @property
+    def num_hits(self) -> int:
+        """Return the number of hits."""
+        return len(self.hits)
+    
+    @property
+    def top_hit(self) -> Optional[BlastHit]:
+        """Return the top hit by bit score."""
+        if not self.hits:
+            return None
+        return max(self.hits, key=lambda x: x.bit_score)
+
+
+class SequenceNarrative(BaseModel):
+    """Model for AI-generated sequence narrative."""
+    
+    sequence_id: str = Field(description="Sequence identifier")
+    narrative: str = Field(description="Generated narrative text")
+    confidence: float = Field(ge=0, le=1, description="Confidence score")
+    sources: List[str] = Field(
+        default_factory=list,
+        description="Sources used for narrative generation"
+    )
