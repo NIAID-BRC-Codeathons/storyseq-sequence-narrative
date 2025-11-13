@@ -2,8 +2,41 @@
 
 from typing import List, Optional
 from pydantic import BaseModel, Field
+from typing import Union
 
+class SketchError(BaseModel):
+    """Model for a file processing error during sketching."""
+    error: str = Field(description="Description of the error that occurred.")
+    
+class RunSummary(BaseModel):
+    """Fasta sketch. Summary of the FASTA sketch run."""
+    total_input_files: int
+    input_files_list: List[str]
+    errors: List[SketchError]
 
+class FileDetail(BaseModel):
+    """Detailed sketch of a single, alphabet-uniform FASTA file."""
+    source_file: str
+    original_source: Optional[str] = None
+    record_count: int
+    total_length: int
+    
+class PartitionDetail(BaseModel):
+    """A collection of files and aggregated stats for a single alphabet type."""
+    total_records: int
+    total_length: int
+    average_length: float
+    files: List[FileDetail]
+
+class Partitions(BaseModel):
+    """Container for the NT and AA partitions."""
+    NT: PartitionDetail
+    AA: PartitionDetail
+    
+class FastaSketch(BaseModel):
+    """Top level fasta sketch. The definitive, structured model for the output of the fasta_sketch.py script."""
+    run_summary: RunSummary
+    partitions: Partitions
 
 class AnalysisConfig(BaseModel):
     """
@@ -13,6 +46,7 @@ class AnalysisConfig(BaseModel):
     find_protein_homologs: bool = False
     functional_hint: bool = False
     custom_other: bool = False
+    fast_sketch: FastaSketch 
 
 
 class BlastHit(BaseModel):
