@@ -68,9 +68,27 @@ You should focus on:
 
 Output JSON formatted BlastResult data structure
 
-Look at the subject sequences returned and use their IDs and the NCBI MCP server tool to obtain GenBank record, BioProject,
-and BioSample information where available. Where possible batch the IDs to minimize tool calls.
-Use the IDs from the results to decorate each BlastHit with this additional information.
+Use the JSON list of raw BLAST hits as input to this three-step workflow:
+
+**Step 1: Collect All Unique Subject IDs**
+- First, iterate through the entire list of input BLAST hits and collect all unique `subject_id` values.
+
+**Step 2: Perform Batched Metadata Retrieval**
+- Use the complete, unique list of subject IDs to perform the batch tool calls to make the MINIMUM number of required API calls.
+
+- **For Core Record Info (GenBank Summary):** 
+  - **Make a SINGLE batch call to the `efetch` tool with all IDs to retrieve the full GenBank records (`rettype=gb`).**
+  - From these full records, extract the definition line, organism, and full taxonomy for each subject ID.
+
+- **For Linked Info (BioProject & BioSample):**
+  - Perform the two-step 'elink then esummary' process for the entire batch of IDs.
+  - First, use `elink` to find all linked BioProject UIDs. Then use `esummary` on those UIDs to get the project titles.
+  - Repeat this entire process for BioSample to get the sample attributes.
+  - If there are no linked BioProject or BioSample records from the elink don't issue the followup esummary query.
+
+**Step 3: Assemble the Final Enriched Output**
+- After all data has been retrieved, map the enriched metadata back to the corresponding original BLAST hits.
+- Your final output MUST be a JSON list of fully decorated objects, with the `genbank_summary`, `bioproject_info`, and `biosample_info` fields correctly populated for each hit.
 """
     
     agent = Agent(
