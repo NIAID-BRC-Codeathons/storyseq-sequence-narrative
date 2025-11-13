@@ -32,8 +32,6 @@ class BlastHit(BaseModel):
 
 class BlastResult(BaseModel):
     """Model for BLAST search results."""
-    
-    query_id: str = Field(description="Query sequence identifier")
     query_length: int = Field(gt=0, description="Length of query sequence")
     hits: List[BlastHit] = Field(default_factory=list, description="List of BLAST hits")
     database: str = Field(description="Database searched")
