@@ -23,8 +23,8 @@ class BlastAgentDeps(BaseModel):
 
 
 async def get_blast_agent(
-    llm_api_url: str,
-    llm_api_key: str,
+    llm_api_url: Optional[str],
+    llm_api_key: Optional[str],
     model_name: str = "gpt-4",
     mcp_servers: Optional[list] = None
 ) -> Agent:

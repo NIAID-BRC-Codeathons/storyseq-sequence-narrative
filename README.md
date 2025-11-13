@@ -33,6 +33,22 @@ pip install -e ".[dev]"
 
 ## Usage
 
+### Initialization
+
+Before using story-seq, initialize the configuration file:
+
+```bash
+story-seq init
+```
+
+This creates a default configuration file at `~/.storyseq/config.json` with:
+- LLM API URL: `http://lambda5.cels.anl.gov:44497/v1`
+- LLM Model: `gpt5`
+- LLM API Key: `.`
+
+Options:
+- `--force, -f`: Overwrite existing configuration file
+
 ### Basic Commands
 
 ```bash
@@ -41,6 +57,9 @@ story-seq --help
 
 # Show version
 story-seq --version
+
+# Initialize configuration
+story-seq init
 
 # BLAST command (not yet implemented)
 story-seq blast --query sequence.fasta --database mydb
@@ -58,6 +77,41 @@ Options:
 - `--query, -q`: Query sequence or file path
 - `--database, -d`: Database to search against
 - `--output, -o`: Output file path
+- `--llm-api-url`: LLM API endpoint URL (overrides config file)
+- `--llm-model`: LLM model to use (overrides config file)
+- `--llm-api-key`: API key for LLM service (overrides config file)
+
+### Run Agent Command
+
+The `run-agent` command allows you to run individual agents from the pipeline with custom prompts.
+
+```bash
+story-seq run-agent <agent-name> [options]
+```
+
+Available agents:
+- `configuration`: Manage and validate configuration settings
+- `blast`: Execute BLAST searches and parse results
+- `data_decoration`: Enrich sequence data with annotations
+- `reporter`: Generate narrative reports from results
+- `validation`: Validate inputs and results for quality control
+
+Example:
+```bash
+story-seq run-agent reporter \
+  --query sequences.fasta \
+  --prompt "Summarize the top 5 BLAST hits" \
+  --llm-api-url https://api.openai.com/v1 \
+  --llm-model gpt-4 \
+  --llm-api-key your-key
+```
+
+Options (same as blast command):
+- `--query, -q`: Query FASTA file path (optional for some agents)
+- `--database, -d`: Database to search against
+- `--output, -o`: Output file path
+- `--question`: Question to ask the LLM
+- `--prompt, -p`: Custom prompt or instructions for the agent
 - `--llm-api-url`: LLM API endpoint URL (overrides config file)
 - `--llm-model`: LLM model to use (overrides config file)
 - `--llm-api-key`: API key for LLM service (overrides config file)

@@ -1,8 +1,7 @@
 """Agent modules for story-seq."""
 
 from story_seq.agent.configuration_agent import (
-    get_configuration_agent,
-    ConfigurationAgentDeps,
+    get_configuration_agent
 )
 from story_seq.agent.blast_agent import (
     get_blast_agent,

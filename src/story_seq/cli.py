@@ -1,14 +1,16 @@
 """CLI interface for story-seq."""
 
+import asyncio
 from pathlib import Path
 from typing import Optional
 import typer
 from rich.console import Console
 from rich.table import Table
+from rich.syntax import Syntax
 from typing_extensions import Annotated
 
 from story_seq import __version__
-from story_seq.config import load_config, get_config_path
+from story_seq.config import load_config, get_config_path, save_config, StorySeqConfig
 
 app = typer.Typer(
     name="story-seq",
@@ -45,6 +47,64 @@ def main(
     Use --help with any command to see detailed help information.
     """
     pass
+
+
+@app.command()
+def init(
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            "-f",
+            help="Overwrite existing configuration file",
+        ),
+    ] = False,
+) -> None:
+    """
+    Initialize story-seq configuration.
+    
+    Creates a default configuration file at ~/.storyseq/config.json
+    (or at the path specified by STORY_SEQ_CONFIG environment variable).
+    """
+    config_path = get_config_path()
+    
+    # Check if config already exists
+    if config_path.exists() and not force:
+        console.print(f"[yellow]Configuration file already exists at:[/yellow] {config_path}")
+        console.print("[dim]Use --force to overwrite[/dim]")
+        raise typer.Exit(0)
+    
+    # Create default configuration
+    default_config = StorySeqConfig(
+        llm_api_url="http://lambda5.cels.anl.gov:44497/v1",
+        llm_model="gpt5",
+        llm_api_key=".",
+    )
+    
+    # Save configuration
+    try:
+        save_config(default_config)
+        console.print(f"[green]✓[/green] Configuration file created at: [cyan]{config_path}[/cyan]")
+        console.print()
+        
+        # Display the configuration
+        table = Table(title="Default Configuration")
+        table.add_column("Parameter", style="cyan", no_wrap=True)
+        table.add_column("Value", style="green")
+        
+        table.add_row("LLM API URL", default_config.llm_api_url or "[dim]Not set[/dim]")
+        table.add_row("LLM Model", default_config.llm_model)
+        table.add_row("LLM API Key", default_config.llm_api_key or "[dim]Not set[/dim]")
+        table.add_row("BLAST E-value", str(default_config.blast_evalue))
+        table.add_row("Max Tokens", str(default_config.max_tokens))
+        
+        console.print(table)
+        console.print()
+        console.print("[dim]You can edit this file directly or override values using command-line options.[/dim]")
+        
+    except Exception as e:
+        console.print(f"[red]Error:[/red] Failed to create configuration file: {e}")
+        raise typer.Exit(1)
 
 
 @app.command()
@@ -141,6 +201,212 @@ def blast(
     table.add_row("LLM API Key", "[dim]***[/dim]" if final_llm_api_key else "[dim]Not specified[/dim]")
     
     console.print(table)
+
+
+@app.command()
+def run_agent(
+    agent_name: Annotated[
+        str,
+        typer.Argument(
+            help="Name of the agent to run (configuration, blast, data_decoration, reporter, validation)",
+        ),
+    ],
+    query: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--query",
+            "-q",
+            help="Query FASTA file path",
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ] = None,
+    database: Annotated[
+        str,
+        typer.Option(
+            "--database",
+            "-d",
+            help="Database to search against",
+        ),
+    ] = "",
+    output: Annotated[
+        str,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output file path",
+        ),
+    ] = "output.txt",
+    llm_api_url: Annotated[
+        Optional[str],
+        typer.Option(
+            "--llm-api-url",
+            help="LLM API endpoint URL (overrides config file)",
+        ),
+    ] = None,
+    llm_model: Annotated[
+        Optional[str],
+        typer.Option(
+            "--llm-model",
+            help="LLM model to use (overrides config file)",
+        ),
+    ] = None,
+    llm_api_key: Annotated[
+        Optional[str],
+        typer.Option(
+            "--llm-api-key",
+            help="API key for LLM service (overrides config file)",
+        ),
+    ] = None,
+    question: Annotated[
+        str,
+        typer.Option(
+            "--question",
+            help="Question to ask the LLM about the BLAST results",
+        ),
+    ] = ""
+) -> None:
+    """
+    Run a specific agent with custom parameters.
+    
+    This command allows you to run individual agents from the story-seq pipeline
+    with custom prompts and parameters.
+    
+    Available agents:
+    - configuration: Manage and validate configuration settings
+    - blast: Execute BLAST searches and parse results
+    - data_decoration: Enrich sequence data with annotations
+    - reporter: Generate narrative reports from results
+    - validation: Validate inputs and results for quality control
+    
+    Configuration is loaded from ~/.storyseq/config.json by default,
+    or from the path specified in STORY_SEQ_CONFIG environment variable.
+    Command-line parameters override configuration file values.
+    """
+    # Load config from file
+    config = load_config()
+    
+    # Override with command-line parameters if provided (check for None explicitly)
+    final_llm_api_url = llm_api_url if llm_api_url is not None else config.llm_api_url
+    final_llm_model = llm_model if llm_model is not None else config.llm_model
+    final_llm_api_key = llm_api_key if llm_api_key is not None else config.llm_api_key
+    
+    # Validate agent name
+    valid_agents = ["configuration", "blast", "data_decoration", "reporter", "validation"]
+    if agent_name not in valid_agents:
+        console.print(f"[red]Error:[/red] Invalid agent name '{agent_name}'")
+        console.print(f"Valid agents: {', '.join(valid_agents)}")
+        raise typer.Exit(1)
+    
+    # Display current configuration
+    console.print(f"[bold cyan]Running Agent:[/bold cyan] {agent_name}")
+    console.print()
+    
+    # Create a table for better display
+    table = Table(title="Agent Configuration")
+    table.add_column("Parameter", style="cyan", no_wrap=True)
+    table.add_column("Value", style="green")
+    
+    table.add_row("Agent", agent_name)
+    table.add_row("Config File", str(get_config_path()))
+    if query:
+        table.add_row("Query", str(query))
+    table.add_row("Database", database if database else "[dim]Not specified[/dim]")
+    table.add_row("Output", output if output else "[dim]Not specified[/dim]")
+    table.add_row("Question", question if question else "[dim]Not specified[/dim]")
+    table.add_row("LLM API URL", final_llm_api_url if final_llm_api_url else "[dim]Not specified[/dim]")
+    table.add_row("LLM Model", final_llm_model)
+    table.add_row("LLM API Key", "[dim]***[/dim]" if final_llm_api_key else "[dim]Not specified[/dim]")
+    
+    console.print(table)
+    console.print()
+    
+    # Run the async implementation
+    results = asyncio.run(_run_agent_async(
+        agent_name=agent_name,
+        query=query,
+        database=database,
+        output=output,
+        llm_api_url=final_llm_api_url,
+        llm_model=final_llm_model,
+        llm_api_key=final_llm_api_key,
+        question=question
+    ))
+    
+    # Print results
+    console.print("[bold green]Results:[/bold green]")
+    console.print(results.output)
+
+
+async def _run_agent_async(
+    agent_name: str,
+    query: Optional[Path],
+    database: str,
+    output: str,
+    llm_api_url: Optional[str],
+    llm_model: str,
+    llm_api_key: Optional[str],
+    question: str,
+):
+    """Async implementation of run_agent command - just runs and returns results."""
+    # Import agents
+    try:
+        from story_seq.agent import (
+            get_configuration_agent,
+            get_blast_agent,
+            get_data_decoration_agent,
+            get_reporter_agent,
+            get_validation_agent,
+        )
+    except ImportError as e:
+        console.print(f"[red]Error:[/red] Failed to import agents: {e}")
+        console.print("[yellow]Make sure pydantic-ai is installed: pip install pydantic-ai[/yellow]")
+        raise typer.Exit(1)
+    
+    # Get the appropriate agent based on agent_name
+    agent = None
+    try:
+        if agent_name == "configuration":
+            agent = await get_configuration_agent(
+                llm_api_url=llm_api_url,
+                llm_api_key=llm_api_key,
+                model_name=llm_model,
+                query=query,
+                question=question,
+            )
+        elif agent_name == "blast":
+            agent = await get_blast_agent(
+                llm_api_url=llm_api_url,
+                llm_api_key=llm_api_key,
+                model_name=llm_model,
+            )
+        elif agent_name == "data_decoration":
+            agent = await get_data_decoration_agent(
+                llm_api_url=llm_api_url,
+                llm_api_key=llm_api_key,
+                model_name=llm_model,
+            )
+        elif agent_name == "reporter":
+            agent = await get_reporter_agent(
+                llm_api_url=llm_api_url,
+                llm_api_key=llm_api_key,
+                model_name=llm_model,
+            )
+        elif agent_name == "validation":
+            agent = await get_validation_agent(
+                llm_api_url=llm_api_url,
+                llm_api_key=llm_api_key,
+                model_name=llm_model,
+            )
+    except Exception as e:
+        console.print(f"[red]Error:[/red] Failed to create agent: {e}")
+        raise typer.Exit(1)
+    
+    # Run the agent and return results
+    results = await agent.run(question)
+    return results
 
 
 if __name__ == "__main__":

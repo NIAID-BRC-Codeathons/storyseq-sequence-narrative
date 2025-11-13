@@ -19,10 +19,6 @@ class StorySeqConfig(BaseModel):
         default=None,
         description="Default path to BLAST database"
     )
-    blast_evalue: float = Field(
-        default=0.001,
-        description="E-value threshold for BLAST"
-    )
     
     # LLM configuration
     llm_api_url: Optional[str] = Field(
@@ -41,12 +37,6 @@ class StorySeqConfig(BaseModel):
         default=2000,
         description="Maximum tokens for AI responses"
     )
-    
-    class Config:
-        """Pydantic config."""
-        
-        extra = "forbid"
-        validate_assignment = True
 
 
 def get_config_path() -> Path:
@@ -77,7 +67,18 @@ def load_config() -> StorySeqConfig:
         with open(config_path, "r") as f:
             config_data = json.load(f)
         return StorySeqConfig(**config_data)
-    except (json.JSONDecodeError, ValidationError) as e:
+    except json.JSONDecodeError as e:
+        # Provide helpful error message for JSON syntax errors
+        print(f"\n[ERROR] Invalid JSON in config file: {config_path}")
+        print(f"[ERROR] {e}")
+        print(f"[ERROR] Please fix the JSON syntax or run 'story-seq init --force' to reset the config.\n")
+        # Return default config so the tool can still work
+        return StorySeqConfig()
+    except ValidationError as e:
+        # Provide helpful error message for validation errors
+        print(f"\n[ERROR] Invalid config values in: {config_path}")
+        print(f"[ERROR] {e}")
+        print(f"[ERROR] Please check your config values or run 'story-seq init --force' to reset.\n")
         # Return default config if file is invalid
         return StorySeqConfig()
 
