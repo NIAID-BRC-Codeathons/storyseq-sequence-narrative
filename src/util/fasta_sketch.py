@@ -121,7 +121,7 @@ def analyze_fasta(file_path):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python fasta_sketch_and_split.py <path_to_fasta_file>")
+        print("Usage: python fasta_sketch.py <path_to_fasta_file>")
         sys.exit(1)
 
     fasta_file = sys.argv[1]
