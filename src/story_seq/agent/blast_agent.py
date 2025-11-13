@@ -84,6 +84,9 @@ Output JSON formatted BlastResult data structure
         Generate instructions based on BLAST parameters and existing results.
         """
         # Read the query file contents
+        
+        #TODO: look at ctx.deps.fasta_sketch for additional info to add to the context
+        
         query_file_path = ctx.deps.query_file
         with open(query_file_path, 'r') as f:
             query_sequences = f.read()

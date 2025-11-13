@@ -62,8 +62,7 @@ class BlastHit(BaseModel):
     query_end: int = Field(gt=0, description="Query sequence end position")
     subject_start: int = Field(gt=0, description="Subject sequence start position")
     subject_end: int = Field(gt=0, description="Subject sequence end position")
-
-
+    
 class BlastResult(BaseModel):
     """Model for BLAST search results."""
     query_length: int = Field(gt=0, description="Length of query sequence")
