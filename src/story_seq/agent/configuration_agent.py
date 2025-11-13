@@ -8,7 +8,7 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from typing import Any, Dict, Optional, Union
 from story_seq.config import StorySeqConfig
 from story_seq.models import AnalysisConfig
-from story_seq.utils import process_multiple_files
+from story_seq.util import process_multiple_files
 
 class ConfigurationAgentDeps(BaseModel):
     """Dependencies for the Configuration Agent."""

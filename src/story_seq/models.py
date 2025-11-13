@@ -2,6 +2,7 @@
 
 from typing import List, Optional
 from pydantic import BaseModel, Field
+from typing import Union
 
 
 
@@ -13,7 +14,7 @@ class AnalysisConfig(BaseModel):
     find_protein_homologs: bool = False
     functional_hint: bool = False
     custom_other: bool = False
-    fast_sketch: Union[FastaSketch,None] = None 
+    fast_sketch: Union["FastaSketch",None] = None 
 
 class SketchError(BaseModel):
     """Model for a file processing error during sketching."""
