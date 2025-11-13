@@ -1,5 +1,6 @@
 """Configuration agent for managing story-seq settings."""
 
+import json
 from pathlib import Path
 from pydantic_ai import Agent, RunContext
 from pydantic import BaseModel, Field
@@ -68,7 +69,8 @@ Use the context from the dependencies to understand:
             # call fasta sketch
             try:
                 fasta_dictionary = process_multiple_files([ctx.deps.query])
-                return json.dumps(dispatch_plan, indent=4)
+                print(fasta_dictionary)
+                return f"Include this JSON information about the fasta file(s) in the AnalaysisConfig {json.dumps(fasta_dictionary, indent=4)}"
             except Exception as e:
                 ctx.deps.question = f"Error processing FASTA files: {e}"
                 return ""
