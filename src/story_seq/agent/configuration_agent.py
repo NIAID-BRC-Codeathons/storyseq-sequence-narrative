@@ -9,13 +9,13 @@ from pydantic_ai.providers.openai import OpenAIProvider
 from typing import Any, Dict, Optional, Union
 from story_seq.config import StorySeqConfig
 from story_seq.models import AnalysisConfig
-from story_seq.util import process_multiple_files
 
 class ConfigurationAgentDeps(BaseModel):
     """Dependencies for the Configuration Agent."""
     question: str = Field(default="", description="User's question guiding the analysis")
     query: Optional[Path] = Field(default=None, description="The input sequence query file path")
     sequence_type: str = Field(default="", description="Type of the sequence (e.g., DNA, protein)")
+    fasta_sketch: Optional[Dict[str, Any]] = Field(default=None, description="FASTA file analysis information from process_multiple_files")
 
 
 async def get_configuration_agent(
@@ -65,14 +65,7 @@ Use the context from the dependencies to understand:
         """
         Generate instructions based on the known materials.
         """
-        if ctx.deps.query:
-            # call fasta sketch
-            try:
-                fasta_dictionary = process_multiple_files([ctx.deps.query])
-                print(fasta_dictionary)
-                return f"Include this JSON information about the fasta file(s) in the AnalaysisConfig {json.dumps(fasta_dictionary, indent=4)}"
-            except Exception as e:
-                ctx.deps.question = f"Error processing FASTA files: {e}"
-                return ""
+        if ctx.deps.fasta_sketch:
+            return f"Include this JSON information about the fasta file(s) in the AnalysisConfig {json.dumps(ctx.deps.fasta_sketch, indent=4)}"
             
     return agent

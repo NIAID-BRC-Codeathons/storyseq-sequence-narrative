@@ -14,11 +14,7 @@ class StorySeqConfig(BaseModel):
     project_name: str = Field(default="story-seq", description="Project name")
     version: str = Field(default="0.1.0", description="Version number")
     
-    # BLAST configuration
-    blast_db_path: Optional[Path] = Field(
-        default=None,
-        description="Default path to BLAST database"
-    )
+
     
     # LLM configuration
     llm_api_url: Optional[str] = Field(

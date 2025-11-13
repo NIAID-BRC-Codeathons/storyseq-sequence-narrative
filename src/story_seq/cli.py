@@ -2,7 +2,7 @@
 
 import asyncio
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Any
 import typer
 from rich.console import Console
 from rich.table import Table
@@ -11,6 +11,18 @@ from typing_extensions import Annotated
 
 from story_seq import __version__
 from story_seq.config import load_config, get_config_path, save_config, StorySeqConfig
+
+
+def paths_to_strings(obj: Any) -> Any:
+    """Recursively convert Path objects to strings for JSON serialization."""
+    if isinstance(obj, Path):
+        return str(obj)
+    elif isinstance(obj, dict):
+        return {k: paths_to_strings(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [paths_to_strings(item) for item in obj]
+    else:
+        return obj
 
 app = typer.Typer(
     name="story-seq",
@@ -365,6 +377,7 @@ async def _run_agent_async(
         from story_seq.agent.data_decoration_agent import DataDecorationAgentDeps
         from story_seq.agent.reporter_agent import ReporterAgentDeps
         from story_seq.agent.validation_agent import ValidationAgentDeps
+        from story_seq.util import process_multiple_files
     except ImportError as e:
         console.print(f"[red]Error:[/red] Failed to import agents: {e}")
         console.print("[yellow]Make sure pydantic-ai is installed: pip install pydantic-ai[/yellow]")
@@ -380,11 +393,21 @@ async def _run_agent_async(
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
             )
+            # Process FASTA file(s) if provided
+            fasta_sketch = None
+            if query:
+                try:
+                    raw_fasta_sketch = process_multiple_files([query])
+                    fasta_sketch = paths_to_strings(raw_fasta_sketch)
+                except Exception as e:
+                    console.print(f"[yellow]Warning:[/yellow] Error processing FASTA file: {e}")
+            
             # Create dependencies for the configuration agent
             deps = ConfigurationAgentDeps(
                 question=question,
                 query=query,
                 sequence_type="",  # Could be determined from the file
+                fasta_sketch=fasta_sketch,
             )
         elif agent_name == "blast":
             agent = await get_blast_agent(
@@ -406,8 +429,9 @@ async def _run_agent_async(
                 model_name=llm_model,
             )
             # Create dependencies for the data decoration agent
+            # Convert any Path objects in blast_results to strings
             deps = DataDecorationAgentDeps(
-                blast_results=[],  # Would normally come from previous step
+                blast_results=paths_to_strings([]),  # Would normally come from previous step
                 include_taxonomy=True,
                 include_functional=True,
             )
@@ -418,9 +442,10 @@ async def _run_agent_async(
                 model_name=llm_model,
             )
             # Create dependencies for the reporter agent
+            # Convert any Path objects to strings
             deps = ReporterAgentDeps(
-                blast_results=[],  # Would normally come from previous step
-                enriched_data=None,
+                blast_results=paths_to_strings([]),  # Would normally come from previous step
+                enriched_data=paths_to_strings(None),
                 question=question if question else None,
             )
         elif agent_name == "validation":
