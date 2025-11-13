@@ -29,3 +29,7 @@ From BV-BRC AMR Workshop: https://www.bv-brc.org/workspace/ARWattam@patricbrc.or
     * [gene/prot/human.fcgr2a.faa](gene/prot/human.fcgr2a.faa)
   * Mouse homolog
     * [gene/prot/mouse.fcgr2a.faa](gene/prot/mouse.fcgr2a.faa)
+* M002 IL12 construct - a mixture of HSV1, HepB, mouse IL12 and other construct sequences
+  These sequences contain DNA from a mixture of organisms. A naive megablast will identify the HSV1 sequences at the end, but the mouse IL12 sequence will be lost far down the results. Ideally, one realizes there's a coverage gap and follows up with additional blasts excluding Herpeseviridae to determine the full complement of genes in the sequence. 
+  * just the construct: [gene/nuc/m002_il12_cassette.fna](gene/nuc/m002_il12_cassette.fna)
+  * including adjacent HSV1 RL2 CDS [gene/nuc/m002_il12_cassette_and_RL2.fna](gene/nuc/m002_il12_cassette_and_RL2.fna)
