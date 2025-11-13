@@ -1,10 +1,11 @@
 """Configuration agent for managing story-seq settings."""
 
+from pathlib import Path
 from pydantic_ai import Agent, RunContext
 from pydantic import BaseModel, Field
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
-from typing import Any, Dict, Optional,Union
+from typing import Any, Dict, Optional, Union
 from story_seq.config import StorySeqConfig
 
 
@@ -16,15 +17,20 @@ class AnalysisConfig(BaseModel):
     find_protein_homologs: bool = False
     functional_hint: bool = False
     custom_other: bool = False
-    
+
+
+class ConfigurationAgentDeps(BaseModel):
+    """Dependencies for the Configuration Agent."""
+    question: str = Field(default="", description="User's question guiding the analysis")
+    query: Optional[Path] = Field(default=None, description="The input sequence query file path")
+    sequence_type: str = Field(default="", description="Type of the sequence (e.g., DNA, protein)")
+
+
 async def get_configuration_agent(
     llm_api_key: Optional[str],
     model_name: str = "gpt-4",
     llm_api_url: Optional[str] = None,
-    question: str = "",
-    query: str = "",
-    sequence_type: str = ""
-) -> Agent:
+) -> Agent[ConfigurationAgentDeps, AnalysisConfig]:
     """
     Create and configure the Configuration Agent.
     
@@ -34,28 +40,31 @@ async def get_configuration_agent(
         model_name: Name of the LLM model to use
 
     Returns:
-        Analysis Config
+        Configured Agent instance
     """
     provider = OpenAIProvider(base_url=llm_api_url, api_key=llm_api_key)
     llm_model = OpenAIModel(model_name, provider=provider)
     
- 
     mcp_servers = []
     
     instructions = """
 You are a configuration agent for the story-seq sequence analysis pipeline.
 Based on the input question, sequence type, and query characteristics, determine the appropriate analysis configuration.
 Output an AnalysisConfig object with boolean fields indicating which analyses to perform.
+
+Use the context from the dependencies to understand:
+- The user's question/intent
+- The query file being analyzed
+- The type of sequences involved
 """
     
     agent = Agent(
         model=llm_model,
+        deps_type=ConfigurationAgentDeps,
         output_type=AnalysisConfig,
-        instructions=instructions,
+        system_prompt=instructions,
         retries=3,
         mcp_servers=mcp_servers
     )
-    
-
     
     return agent

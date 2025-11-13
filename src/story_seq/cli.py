@@ -360,6 +360,11 @@ async def _run_agent_async(
             get_reporter_agent,
             get_validation_agent,
         )
+        from story_seq.agent.configuration_agent import ConfigurationAgentDeps
+        from story_seq.agent.blast_agent import BlastAgentDeps
+        from story_seq.agent.data_decoration_agent import DataDecorationAgentDeps
+        from story_seq.agent.reporter_agent import ReporterAgentDeps
+        from story_seq.agent.validation_agent import ValidationAgentDeps
     except ImportError as e:
         console.print(f"[red]Error:[/red] Failed to import agents: {e}")
         console.print("[yellow]Make sure pydantic-ai is installed: pip install pydantic-ai[/yellow]")
@@ -367,14 +372,19 @@ async def _run_agent_async(
     
     # Get the appropriate agent based on agent_name
     agent = None
+    deps = None
     try:
         if agent_name == "configuration":
             agent = await get_configuration_agent(
                 llm_api_url=llm_api_url,
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
-                query=query,
+            )
+            # Create dependencies for the configuration agent
+            deps = ConfigurationAgentDeps(
                 question=question,
+                query=query,
+                sequence_type="",  # Could be determined from the file
             )
         elif agent_name == "blast":
             agent = await get_blast_agent(
@@ -382,11 +392,24 @@ async def _run_agent_async(
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
             )
+            # Create dependencies for the blast agent
+            if query:
+                deps = BlastAgentDeps(
+                    query_file=query,
+                    database=database if database else "nr",
+                    evalue=0.001,
+                )
         elif agent_name == "data_decoration":
             agent = await get_data_decoration_agent(
                 llm_api_url=llm_api_url,
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
+            )
+            # Create dependencies for the data decoration agent
+            deps = DataDecorationAgentDeps(
+                blast_results=[],  # Would normally come from previous step
+                include_taxonomy=True,
+                include_functional=True,
             )
         elif agent_name == "reporter":
             agent = await get_reporter_agent(
@@ -394,18 +417,36 @@ async def _run_agent_async(
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
             )
+            # Create dependencies for the reporter agent
+            deps = ReporterAgentDeps(
+                blast_results=[],  # Would normally come from previous step
+                enriched_data=None,
+                question=question if question else None,
+            )
         elif agent_name == "validation":
             agent = await get_validation_agent(
                 llm_api_url=llm_api_url,
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
             )
+            # Create dependencies for the validation agent
+            deps = ValidationAgentDeps(
+                fasta_file=query,
+                blast_results=None,
+                narrative=None,
+                strict_mode=False,
+            )
     except Exception as e:
         console.print(f"[red]Error:[/red] Failed to create agent: {e}")
         raise typer.Exit(1)
     
     # Run the agent and return results
-    results = await agent.run(question)
+    # Pass deps if the agent uses them, otherwise just the question
+    if deps:
+        results = await agent.run(question, deps=deps)
+    else:
+        results = await agent.run(question)
+        
     return results
 
 
