@@ -67,6 +67,10 @@ You should focus on:
 - Taxonomic and functional relevance of hits
 
 Output JSON formatted BlastResult data structure
+
+Look at the subject sequences returned and use their IDs and the NCBI MCP server tool to obtain GenBank record, BioProject,
+and BioSample information where available. Where possible batch the IDs to minimize tool calls.
+Use the IDs from the results to decorate each BlastHit with this additional information.
 """
     
     agent = Agent(
