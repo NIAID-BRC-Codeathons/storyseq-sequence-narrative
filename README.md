@@ -221,9 +221,38 @@ The NIAID Bioinformatics Resource Centers (BRCs) invite researchers, data scient
 
 *Team members: Add your project setup instructions here.*
 
+Of course. Here is the Markdown content to add to the end of your `README.md` file, including the team list and a formatted citation. This is designed to be directly copied and pasted.
+
+---
+
 ## Team
 
-*Team members: Add your team information here.*
+-   Andrew Warren
+-   Curtis Hendrickson
+-   Dustin Machi
+-   Jason Williams
+-   Andrew Freiburger
+
+## Citation
+
+If you use StorySeq in your research, please cite it as follows:
+
+Freiburger, A., Hendrickson, C., Machi, D., Willams, J., & Warren, A. (2025). *StorySeq: Automated Sequence Narrative Generation* (Version 0.1.0) [Computer software]. GitHub. Retrieved from https://github.com/NIAID-BRC-Codeathons/storyseq-sequence-narrative
+
+### BibTeX
+
+For users of LaTeX and reference managers, you can use the following BibTeX entry:
+
+```bibtex
+@software{StorySeq2025,
+  author = {Freiburger, Andrew and Hendrickson, Curtis and Machi, Dustin and Williams, Jason and Warren, Andrew},
+  title = {{StorySeq: Automated Sequence Narrative Generation}},
+  year = {2025},
+  version = {0.1.0},
+  publisher = {GitHub},
+  url = {https://github.com/NIAID-BRC-Codeathons/storyseq-sequence-narrative}
+}
+```
 
 ## License
 
