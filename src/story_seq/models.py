@@ -61,6 +61,11 @@ class BlastHit(BaseModel):
     query_end: int = Field(gt=0, description="Query sequence end position")
     subject_start: int = Field(gt=0, description="Subject sequence start position")
     subject_end: int = Field(gt=0, description="Subject sequence end position")
+    genbank_summary: Optional[str] = Field(None, description="GenBank summary of the subject sequence")
+    bioproject_info: Optional[str] = Field(None, description="BioProjects related to the subject sequence")
+    biosample_info: Optional[str] = Field(None, description="BioSamples related to the subject sequence")
+    
+
     
 class BlastResult(BaseModel):
     """Model for BLAST search results."""
