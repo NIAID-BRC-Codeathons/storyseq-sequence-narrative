@@ -51,7 +51,11 @@ async def get_validation_agent(
     Returns:
         Configured Agent instance
     """
-    provider = OpenAIProvider(base_url=llm_api_url, api_key=llm_api_key)
+    # Only pass api_key if it's not empty
+    provider_kwargs = {"base_url": llm_api_url}
+    if llm_api_key:
+        provider_kwargs["api_key"] = llm_api_key
+    provider = OpenAIProvider(**provider_kwargs)
     llm_model = OpenAIModel(model_name, provider=provider)
     
     if mcp_servers is None:

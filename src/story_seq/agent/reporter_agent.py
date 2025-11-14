@@ -1,6 +1,7 @@
 """Reporter agent for generating narrative reports."""
 
 import json
+from pathlib import Path
 from pydantic_ai import Agent, RunContext
 from pydantic import BaseModel, Field
 from pydantic_ai.models.openai import OpenAIModel
@@ -42,27 +43,19 @@ async def get_reporter_agent(
     Returns:
         Configured Agent instance
     """
-    provider = OpenAIProvider(base_url=llm_api_url, api_key=llm_api_key)
+    # Only pass api_key if it's not empty
+    provider_kwargs = {"base_url": llm_api_url}
+    if llm_api_key:
+        provider_kwargs["api_key"] = llm_api_key
+    provider = OpenAIProvider(**provider_kwargs)
     llm_model = OpenAIModel(model_name, provider=provider)
     
     mcp_servers = []
     
-    instructions = """
-You are a reporter agent for the story-seq sequence analysis pipeline.
-Generate comprehensive, narrative-style reports from BLAST results and enriched sequence data.
-
-Your tasks:
-1. Synthesize information from BLAST results and enriched data
-2. Generate a structured narrative that explains the details based on the AnalysisConfig
-   - Sequence identity and similarity
-   - Taxonomic classification
-   - Functional annotations
-   - Evolutionary relationships
-3. Address specific questions posed by the user
-4. Provide clear, scientifically accurate interpretations
-
-Use the provided data to create an informative, accessible report for researchers.
-"""
+    # Read instructions from static markdown file
+    prompt_file = Path(__file__).parent / "static_reporter_agent_prompt.md"
+    with open(prompt_file, 'r') as f:
+        instructions = f.read()
     
     agent = Agent(
         model=llm_model,
@@ -79,7 +72,7 @@ Use the provided data to create an informative, accessible report for researcher
         """
         Generate instructions based on available data and user question.
         """
-        context = f"Generating narrative for {len(ctx.deps.blast_results)} BLAST results.\n"
+        context = f"Generate narrative for {len(ctx.deps.blast_results)} BLAST results.\n"
         
         if ctx.deps.analysis_config:
             context += f"\nUsing Analysis Configuration:\n{ctx.deps.analysis_config.model_dump_json(indent=4)}\n"  

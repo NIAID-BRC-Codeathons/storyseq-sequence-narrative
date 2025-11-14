@@ -13,7 +13,6 @@ from typing import Any, Dict, List, Optional
 from pathlib import Path
 from story_seq.models import BlastResult, AnalysisConfig
 
-
 class BlastAgentDeps(BaseModel):
     """
     Dependencies for the BLAST Agent.
@@ -42,7 +41,11 @@ async def get_blast_agent(
     Returns:
         Configured Agent instance
     """
-    provider = OpenAIProvider(base_url=llm_api_url, api_key=llm_api_key)
+    # Only pass api_key if it's not empty
+    provider_kwargs = {"base_url": llm_api_url}
+    if llm_api_key:
+        provider_kwargs["api_key"] = llm_api_key
+    provider = OpenAIProvider(**provider_kwargs)
     llm_model = OpenAIModel(model_name, provider=provider)
     
     # Define the MCP server for NCBI BLAST functionality
@@ -58,54 +61,20 @@ async def get_blast_agent(
     mcp_servers = [
         MCPServerStdio(sys.executable, ['-m', 'ncbi_mcp_server.server'],
                        env=env,             # explicitly pass environment variables
-                       timeout=30.0,        # wait up to 30s for the server to start
-                       read_timeout=900.0,  # allow up to 15 minutes of inactivity while a tool runs
-                       max_retries=1)
+                    #    timeout=30.0,        # wait up to 30s for the server to start
+                    #    read_timeout=900.0,  # allow up to 15 minutes of inactivity while a tool runs
+                    #    max_retries=1
+                       )
     ]
     
-    instructions = """
-You are a BLAST analysis agent specialized in sequence similarity searches.
-Your role is to:
-
-- Execute BLAST searches against specified databases
-- Limit result to the top 100 hits
-- return the blast output as a BlastResult dictionary
-
-
-You should focus on:
-- E-value significance thresholds
-- Percent identity and coverage metrics
-- Alignment quality assessment
-- Taxonomic and functional relevance of hits
-
-Output JSON formatted BlastResult data structure
-
-Use the JSON list of raw BLAST hits as input to this three-step workflow:
-
-**Step 1: Collect All Unique Subject IDs**
-- First, iterate through the entire list of input BLAST hits and collect all unique `subject_id` values.
-
-**Step 2: Perform Batched Metadata Retrieval**
-- Use the complete, unique list of subject IDs to perform the batch tool calls to make the MINIMUM number of required API calls.
-
-- **For Core Record Info (GenBank Summary):** 
-  - **Make a SINGLE batch call to the `efetch` tool with all IDs to retrieve the full GenBank records (`rettype=gb`).**
-  - From these full records, extract the definition line, organism, and full taxonomy for each subject ID.
-
-- **For Linked Info (BioProject & BioSample):**
-  - Perform the two-step 'elink then esummary' process for the entire batch of IDs.
-  - First, use `elink` to find all linked BioProject UIDs. Then use `esummary` on those UIDs to get the project titles.
-  - Repeat this entire process for BioSample to get the sample attributes.
-  - If there are no linked BioProject or BioSample records from the elink don't issue the followup esummary query.
-
-**Step 3: Assemble the Final Enriched Output**
-- After all data has been retrieved, map the enriched metadata back to the corresponding original BLAST hits.
-- Your final output MUST be a JSON list of fully decorated objects, with the `genbank_summary`, `bioproject_info`, and `biosample_info` fields correctly populated for each hit.
-"""
+    # Read instructions from static markdown file
+    prompt_file = Path(__file__).parent / "static_blast_agent_prompt.md"
+    with open(prompt_file, 'r') as f:
+        instructions = f.read()
     
     agent = Agent(
         model=llm_model,
-        output_type=BlastResult,  # NCBI MCP server returns JSON string results
+        output_type=List[BlastResult],  # NCBI MCP server returns JSON string results
         deps_type=BlastAgentDeps,
         system_prompt=instructions,
         retries=3,

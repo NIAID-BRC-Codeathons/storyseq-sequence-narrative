@@ -113,7 +113,7 @@ class call_reporter_agent(BaseNode[PipelineState]):
         from story_seq.models import SequenceNarrative
 
         deps = ReporterAgentDeps(
-            blast_results=[ctx.state.blast_results] if ctx.state.blast_results else [],
+            blast_results=ctx.state.blast_results if ctx.state.blast_results else [],
             analysis_config=ctx.state.analysis_config,
             question=opts.question
         )

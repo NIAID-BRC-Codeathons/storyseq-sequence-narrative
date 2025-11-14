@@ -45,7 +45,11 @@ class AnalysisConfig(BaseModel):
     identify_unknown_dna: bool = False
     find_protein_homologs: bool = False
     functional_hint: bool = False
-    custom_other: bool = False
+    custom_other: bool = False,
+    analysis_scenario: str = Field(
+        default="",
+        description="Description of the analysis scenario"
+    )
   
 
 class BlastHit(BaseModel):
@@ -64,15 +68,14 @@ class BlastHit(BaseModel):
     genbank_summary: Optional[str] = Field(None, description="GenBank summary of the subject sequence")
     bioproject_info: Optional[str] = Field(None, description="BioProjects related to the subject sequence")
     biosample_info: Optional[str] = Field(None, description="BioSamples related to the subject sequence")
-    
-
-    
+     
 class BlastResult(BaseModel):
     """Model for BLAST search results."""
     query_length: int = Field(gt=0, description="Length of query sequence")
     hits: List[BlastHit] = Field(default_factory=list, description="List of BLAST hits")
     database: str = Field(description="Database searched")
-    
+    blast_method: str = Field(description="BLAST method used (e.g., blastn, blastp)")   
+    search_reason: str = Field(description="Reason for performing this BLAST search")  
     @property
     def num_hits(self) -> int:
         """Return the number of hits."""

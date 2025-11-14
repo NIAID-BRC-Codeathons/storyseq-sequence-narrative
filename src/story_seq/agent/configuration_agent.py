@@ -36,21 +36,19 @@ async def get_configuration_agent(
     Returns:
         Configured Agent instance
     """
-    provider = OpenAIProvider(base_url=llm_api_url, api_key=llm_api_key)
+    # Only pass api_key if it's not empty
+    provider_kwargs = {"base_url": llm_api_url}
+    if llm_api_key:
+        provider_kwargs["api_key"] = llm_api_key
+    provider = OpenAIProvider(**provider_kwargs)
     llm_model = OpenAIModel(model_name, provider=provider)
     
     mcp_servers = []
     
-    instructions = """
-You are a configuration agent for the story-seq sequence analysis pipeline.
-Based on the input question, sequence type, and query characteristics, determine the appropriate analysis configuration.
-Output an AnalysisConfig object with boolean fields indicating which analyses to perform.
-
-Use the context from the dependencies to understand:
-- The user's question/intent
-- The query file being analyzed
-- The type of sequences involved
-"""
+    # Read instructions from static markdown file
+    prompt_file = Path(__file__).parent / "static_configuration_agent_prompt.md"
+    with open(prompt_file, 'r') as f:
+        instructions = f.read()
   
     agent = Agent(
         model=llm_model,
@@ -70,6 +68,6 @@ Use the context from the dependencies to understand:
         """
         # Access fasta_sketch from ctx.prompt (the deps passed to run())
         if hasattr(ctx, 'prompt') and ctx.prompt and hasattr(ctx.prompt, 'fasta_sketch') and ctx.prompt.fasta_sketch:
-            return f"Include this JSON information about the fasta file(s) in the AnalysisConfig {json.dumps(ctx.prompt.fasta_sketch, indent=4)}"
+            return f"Here is the FASTA sketch:\n{json.dumps(ctx.prompt.fasta_sketch, indent=4)}"
             
     return agent

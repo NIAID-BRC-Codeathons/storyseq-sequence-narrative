@@ -19,7 +19,7 @@ class PipelineState(BaseModel):
     options: PipelineOptions = Field(default_factory=PipelineOptions, exclude=True)
     fasta_sketch: Optional[Dict[str, Any]] = Field(default=None, description="FASTA file sketch information")
     analysis_config: Union[None,AnalysisConfig] = Field(default=None, description="Analysis configuration determined by the configuration agent")   
-    blast_results: Optional[BlastResult] = Field(default=None, description="BLAST results from the BLAST agent")
+    blast_results: Optional[List[BlastResult]] = Field(default=None, description="BLAST results from the BLAST agent")
     narrative: Union[None, str, SequenceNarrative] = Field(default=None, description="Narrative report from the reporter agent")
     state_file_path: Optional[str] = Field(default=None, exclude=True, description="Path to state file for persistence")
     
