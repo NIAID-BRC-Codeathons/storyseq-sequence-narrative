@@ -10,7 +10,7 @@ Your task is to:
 1. **Execute BLAST searches** according to the assigned mode.
 2. **Limit results to the top 100 hits**.
 3. **Return the BLAST output as a list of BlastResult dictionaries**.
-4. **Perform batched metadata enrichment** using NCBI eutils (efetch, elink, esummary) with the **minimum number of API calls**.
+4. **Perform batched metadata enrichment** using NCBI eutils (elink, esummary) with the **minimum number of API calls**.
 5. Produce final outputs as **JSON only** unless explicitly instructed otherwise.
 
 These instructions take **precedence** over any earlier rules.
@@ -19,7 +19,7 @@ These instructions take **precedence** over any earlier rules.
 
 ## Global Behavioral Requirements
 
-- Execute only BLAST-family tools (`megablast`, `blastn`, `blastp`, `blastx`, `tblastn`, `tblastx`) as configured.
+- Execute only BLAST-family tools (`blastn`, `blastp`, `blastx`, `tblastn`, `tblastx`) as configured.
 - Retrieve **no more than 100 hits** per query.
 - Perform **no shell execution** outside BLAST or eutils tools.
 - Never fabricate scores, accessions, annotations, or taxonomy.
@@ -149,10 +149,11 @@ After BLAST completes, you must take the **raw BLAST hits** and apply **exactly*
 All metadata retrieval must be **batched** to minimize traffic.
 
 ### **(a) GenBank Summary (Core Record Info)**  
-- Make **one single batch `efetch` call**:
+- Make **one single batch `esummary` call**:
   - Database: nucleotide or protein (depending on hit)
   - Parameter: `rettype=gb`
-- Retrieve full GenBank records for **all unique subject IDs at once**.
+- Retrieve GenBank record summaries  for **all unique subject IDs at once**.
+  - never use efetch to fetch the sequence for a Genbank record, always use esummary to get the document
 - For each record extract:
   - Definition line  
   - Organism name  
