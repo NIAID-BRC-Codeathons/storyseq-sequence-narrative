@@ -45,7 +45,7 @@ class AnalysisConfig(BaseModel):
     identify_unknown_dna: bool = False
     find_protein_homologs: bool = False
     functional_hint: bool = False
-    custom_other: bool = False,
+    custom_other: bool = False
     analysis_scenario: str = Field(
         default="",
         description="Description of the analysis scenario"

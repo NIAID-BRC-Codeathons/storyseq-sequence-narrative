@@ -6,8 +6,6 @@ from pydantic_ai import Agent, RunContext
 from pydantic import BaseModel, Field
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
-from pydantic_ai.mcp import MCPServerStdio
-import sys
 
 from typing import Any, Dict, List, Optional
 from story_seq.models import SequenceNarrative, BlastResult
@@ -53,9 +51,8 @@ async def get_reporter_agent(
     provider = OpenAIProvider(**provider_kwargs)
     llm_model = OpenAIModel(model_name, provider=provider)
     
-    mcp_servers = [
-        MCPServerStdio(sys.executable, ['-m', 'paper_search_mcp.server'])
-    ]
+    # Reporter agent doesn't need MCP servers - it only synthesizes narratives from existing data
+    # mcp_servers = []
     
     # Read instructions from static markdown file
     prompt_file = Path(__file__).parent / "static_reporter_agent_prompt.md"
@@ -68,7 +65,7 @@ async def get_reporter_agent(
         deps_type=ReporterAgentDeps,
         instructions=instructions,
         retries=3,
-        mcp_servers=mcp_servers,
+        # mcp_servers parameter omitted - not needed for narrative synthesis
         model_settings={'max_tokens': max_tokens}
     )
     

@@ -14,7 +14,6 @@ class ConfigurationAgentDeps(BaseModel):
     """Dependencies for the Configuration Agent."""
     question: str = Field(default="", description="User's question guiding the analysis")
     query: Optional[Path] = Field(default=None, description="The input sequence query file path")
-    sequence_type: str = Field(default="", description="Type of the sequence (e.g., DNA, protein)")
     fasta_sketch: Optional[Dict[str, Any]] = Field(default=None, description="FASTA file analysis information from process_multiple_files")
 
 

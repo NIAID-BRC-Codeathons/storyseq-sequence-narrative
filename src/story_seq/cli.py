@@ -449,7 +449,6 @@ async def _run_agent_async(
             deps = ConfigurationAgentDeps(
                 question=question,
                 query=query,
-                sequence_type="",  # Could be determined from the file
                 fasta_sketch=fasta_sketch,
             )
         elif agent_name == "blast":

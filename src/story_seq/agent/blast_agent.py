@@ -60,11 +60,10 @@ async def get_blast_agent(
     
     mcp_servers = [
         MCPServerStdio(sys.executable, ['-m', 'ncbi_mcp_server.server'],
-                       env=env,             # explicitly pass environment variables
-                    #    timeout=30.0,        # wait up to 30s for the server to start
-                    #    read_timeout=900.0,  # allow up to 15 minutes of inactivity while a tool runs
-                    #    max_retries=1
-                       )
+                    env=env,  # explicitly pass environment variables
+                    log_level="debug",
+                    read_timeout=900
+        )
     ]
     
     # Read instructions from static markdown file
