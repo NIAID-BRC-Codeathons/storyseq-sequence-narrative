@@ -30,6 +30,7 @@ async def get_data_decoration_agent(
     llm_api_url: Optional[str],
     llm_api_key: Optional[str],
     model_name: str = "gpt-4",
+    max_tokens: int = 2000,
     mcp_servers: Optional[list] = None
 ) -> Agent:
     """
@@ -39,6 +40,7 @@ async def get_data_decoration_agent(
         llm_api_url: Base URL for the LLM API
         llm_api_key: API key for authentication
         model_name: Name of the LLM model to use
+        max_tokens: Maximum tokens for AI responses
         mcp_servers: Optional list of MCP servers
         
     Returns:
@@ -51,24 +53,17 @@ async def get_data_decoration_agent(
         mcp_servers = []
     
     instructions = """
-You are a data decoration agent specialized in enriching biological sequence information.
-Your role is to:
+You are a data decoration agent for the story-seq sequence analysis pipeline.
+Enrich BLAST results with additional taxonomic and functional annotations.
 
-- Add contextual information to BLAST results
-- Retrieve and integrate taxonomic classifications
-- Fetch functional annotations and gene ontology terms
-- Include pathway and domain information
-- Add literature references and known associations
-- Provide biological context for sequence matches
+Your tasks:
+1. Extract key information from BLAST results
+2. Retrieve taxonomic lineages for matched sequences
+3. Add functional annotations from databases
+4. Organize and structure enriched data
+5. Provide comprehensive metadata for downstream analysis
 
-You should:
-- Use authoritative databases (UniProt, GenBank, PDB, etc.)
-- Ensure accuracy of annotations
-- Link sequences to biological processes and functions
-- Identify relevant structural and functional domains
-- Note any clinical or research significance
-
-Return enriched data with comprehensive, scientifically accurate annotations.
+Use external APIs and databases to enhance the analytical value of BLAST results.
 """
     
     agent = Agent(
@@ -77,7 +72,8 @@ Return enriched data with comprehensive, scientifically accurate annotations.
         deps_type=DataDecorationAgentDeps,
         instructions=instructions,
         retries=3,
-        mcp_servers=mcp_servers
+        mcp_servers=mcp_servers,
+        model_settings={'max_tokens': max_tokens}
     )
     
     @agent.instructions

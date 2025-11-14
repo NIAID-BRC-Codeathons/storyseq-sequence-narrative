@@ -22,6 +22,7 @@ async def get_configuration_agent(
     llm_api_key: Optional[str],
     model_name: str = "gpt-4",
     llm_api_url: Optional[str] = None,
+    max_tokens: int = 2000,
 ) -> Agent[ConfigurationAgentDeps, AnalysisConfig]:
     """
     Create and configure the Configuration Agent.
@@ -30,6 +31,7 @@ async def get_configuration_agent(
         llm_api_url: Base URL for the LLM API
         llm_api_key: API key for authentication
         model_name: Name of the LLM model to use
+        max_tokens: Maximum tokens for AI responses
 
     Returns:
         Configured Agent instance
@@ -56,7 +58,8 @@ Use the context from the dependencies to understand:
         output_type=AnalysisConfig,
         system_prompt=instructions,
         retries=3,
-        mcp_servers=mcp_servers
+        mcp_servers=mcp_servers,
+        model_settings={'max_tokens': max_tokens}
     )
     
     
@@ -65,7 +68,8 @@ Use the context from the dependencies to understand:
         """
         Generate instructions based on the known materials.
         """
-        if ctx.deps.fasta_sketch:
-            return f"Include this JSON information about the fasta file(s) in the AnalysisConfig {json.dumps(ctx.deps.fasta_sketch, indent=4)}"
+        # Access fasta_sketch from ctx.prompt (the deps passed to run())
+        if hasattr(ctx, 'prompt') and ctx.prompt and hasattr(ctx.prompt, 'fasta_sketch') and ctx.prompt.fasta_sketch:
+            return f"Include this JSON information about the fasta file(s) in the AnalysisConfig {json.dumps(ctx.prompt.fasta_sketch, indent=4)}"
             
     return agent

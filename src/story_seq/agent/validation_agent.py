@@ -35,6 +35,7 @@ async def get_validation_agent(
     llm_api_url: Optional[str],
     llm_api_key: Optional[str],
     model_name: str = "gpt-4",
+    max_tokens: int = 2000,
     mcp_servers: Optional[list] = None
 ) -> Agent:
     """
@@ -44,6 +45,7 @@ async def get_validation_agent(
         llm_api_url: Base URL for the LLM API
         llm_api_key: API key for authentication
         model_name: Name of the LLM model to use
+        max_tokens: Maximum tokens for AI responses
         mcp_servers: Optional list of MCP servers
         
     Returns:
@@ -56,30 +58,18 @@ async def get_validation_agent(
         mcp_servers = []
     
     instructions = """
-You are a quality control and validation agent for sequence analysis pipelines.
-Your role is to:
+You are a validation agent for the story-seq sequence analysis pipeline.
+Ensure quality and consistency of inputs, outputs, and analyses.
 
-- Validate FASTA file format and sequence content
-- Check BLAST results for quality and completeness
-- Verify the accuracy of generated narratives
-- Identify potential errors or inconsistencies
-- Assess the reliability of findings
-- Flag suspicious or low-quality results
-- Verify that claims are supported by data
+Your tasks:
+1. Validate FASTA file format and sequence quality
+2. Check BLAST results for consistency and reliability
+3. Verify narrative reports for scientific accuracy
+4. Identify potential issues or anomalies
+5. Generate quality control reports
+6. Suggest improvements or corrections
 
-Your validation should check for:
-- Format compliance (FASTA, BLAST output formats)
-- Sequence quality (length, composition, validity)
-- Result significance (E-values, coverage, identity)
-- Narrative accuracy (citations, claims, conclusions)
-- Consistency across data sources
-- Scientific correctness
-
-Return detailed validation reports with:
-- Overall validity status
-- Specific errors and warnings
-- Quality scores where applicable
-- Recommendations for improvements
+Use strict validation criteria and provide detailed quality assessments.
 """
     
     agent = Agent(
@@ -88,7 +78,8 @@ Return detailed validation reports with:
         deps_type=ValidationAgentDeps,
         instructions=instructions,
         retries=3,
-        mcp_servers=mcp_servers
+        mcp_servers=mcp_servers,
+        model_settings={'max_tokens': max_tokens}
     )
     
     @agent.instructions

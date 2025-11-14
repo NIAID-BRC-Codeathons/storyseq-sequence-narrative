@@ -175,6 +175,23 @@ def blast(
             help="Question to ask the LLM about the BLAST results",
         ),
     ] = "",
+    state_file: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--state-file",
+            help="Path to file for saving/loading pipeline state",
+            exists=False,
+            file_okay=True,
+            dir_okay=False,
+        ),
+    ] = None,
+    start: Annotated[
+        Optional[str],
+        typer.Option(
+            "--start",
+            help="Task to start pipeline from (get_fasta_sketch, call_config_agent, call_blast_agent, call_reporter_agent)",
+        ),
+    ] = None,
 ) -> None:
     """
     Run BLAST analysis on sequences.
@@ -185,7 +202,13 @@ def blast(
     Configuration is loaded from ~/.storyseq/config.json by default,
     or from the path specified in STORY_SEQ_CONFIG environment variable.
     Command-line parameters override configuration file values.
+    
+    Use --state-file to save pipeline state after each step and --start
+    to resume from a specific task.
     """
+    from story_seq.pipeline.state import PipelineOptions
+    from story_seq.pipeline.blast_pipeline import run_pipeline
+    
     # Load config from file
     config = load_config()
     
@@ -194,12 +217,24 @@ def blast(
     final_llm_model = llm_model or config.llm_model
     final_llm_api_key = llm_api_key or config.llm_api_key
     
+    # Update the config with final values
+    config.llm_api_url = final_llm_api_url
+    config.llm_model = final_llm_model
+    config.llm_api_key = final_llm_api_key
+    
+    # Create PipelineOptions object
+    options = PipelineOptions(
+        config=config,
+        query=str(query),
+        question=question if question else "Analyze the BLAST results"
+    )
+    
     # Display current configuration
-    console.print("[yellow]BLAST command is not yet implemented.[/yellow]")
+    console.print("[bold cyan]Running BLAST Pipeline[/bold cyan]")
     console.print()
     
     # Create a table for better display
-    table = Table(title="Configuration")
+    table = Table(title="Pipeline Configuration")
     table.add_column("Parameter", style="cyan", no_wrap=True)
     table.add_column("Value", style="green")
     
@@ -213,6 +248,10 @@ def blast(
     table.add_row("LLM API Key", "[dim]***[/dim]" if final_llm_api_key else "[dim]Not specified[/dim]")
     
     console.print(table)
+    console.print()
+    
+    # Run the pipeline
+    run_pipeline(options, state_file=state_file, start_task=start)
 
 
 @app.command()
@@ -363,6 +402,9 @@ async def _run_agent_async(
     question: str,
 ):
     """Async implementation of run_agent command - just runs and returns results."""
+    # Load config to get max_tokens
+    config = load_config()
+    
     # Import agents
     try:
         from story_seq.agent import (
@@ -392,6 +434,7 @@ async def _run_agent_async(
                 llm_api_url=llm_api_url,
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
+                max_tokens=config.max_tokens,
             )
             # Process FASTA file(s) if provided
             fasta_sketch = None
@@ -414,6 +457,7 @@ async def _run_agent_async(
                 llm_api_url=llm_api_url,
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
+                max_tokens=config.max_tokens,
             )
             # Create dependencies for the blast agent
             if query:
@@ -427,6 +471,7 @@ async def _run_agent_async(
                 llm_api_url=llm_api_url,
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
+                max_tokens=config.max_tokens,
             )
             # Create dependencies for the data decoration agent
             # Convert any Path objects in blast_results to strings
@@ -440,6 +485,7 @@ async def _run_agent_async(
                 llm_api_url=llm_api_url,
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
+                max_tokens=config.max_tokens,
             )
             # Create dependencies for the reporter agent
             # Convert any Path objects to strings
@@ -453,6 +499,7 @@ async def _run_agent_async(
                 llm_api_url=llm_api_url,
                 llm_api_key=llm_api_key,
                 model_name=llm_model,
+                max_tokens=config.max_tokens,
             )
             # Create dependencies for the validation agent
             deps = ValidationAgentDeps(

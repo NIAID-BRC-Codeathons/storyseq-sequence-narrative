@@ -30,7 +30,7 @@ class StorySeqConfig(BaseModel):
         description="API key for LLM service"
     )
     max_tokens: int = Field(
-        default=2000,
+        default=100000,
         description="Maximum tokens for AI responses"
     )
 
