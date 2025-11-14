@@ -59,36 +59,3 @@ def run_pipeline(options: PipelineOptions, state_file: Optional[Path] = None, st
     print("\nPipeline execution completed!")
     print(f"\n{result.output.narrative}")
 
-
-if __name__ == "__main__":
-    """Export the pipeline graph as a Mermaid diagram PNG file."""
-    import sys
-    
-    # Default output file
-    output_file = "pipeline_graph.png"
-    if len(sys.argv) > 1:
-        output_file = sys.argv[1]
-    
-    try:
-        # Use pydantic_graph's built-in method to save as image
-        ResearchTaskGraph.mermaid_save(output_file)
-        print(f"Pipeline diagram exported to: {output_file}")
-    except Exception as e:
-        print(f"Error generating image: {e}")
-        print("\nFalling back to Mermaid code generation...")
-        
-        # Get the Mermaid diagram code
-        mermaid_diagram = ResearchTaskGraph.mermaid_code()
-        print("\nMermaid diagram:")
-        print(mermaid_diagram)
-        
-        # Save the code to a .mmd file
-        mmd_file = output_file.replace('.png', '.mmd')
-        with open(mmd_file, 'w') as f:
-            f.write(mermaid_diagram)
-        print(f"\nMermaid code saved to: {mmd_file}")
-        print(f"To generate PNG, install mermaid-cli: npm install -g @mermaid-js/mermaid-cli")
-        print(f"Then run: mmdc -i {mmd_file} -o {output_file}")
-    
-    
-    
