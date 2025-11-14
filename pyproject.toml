@@ -26,8 +26,8 @@ dependencies = [
     "pydantic>=2.5.0",
     "pydantic-ai>=0.0.1",
     "rich>=13.0.0",
-    "ncbi-mcp-server @ git+https://github.com/rusalkaguy/ncbi-mcp-server.git"
-
+    "ncbi-mcp-server @ git+https://github.com/rusalkaguy/ncbi-mcp-server.git",
+    "paper-search-mcp @ git+https://github.com/openags/paper-search-mcp.git"
 ]
 
 [project.optional-dependencies]

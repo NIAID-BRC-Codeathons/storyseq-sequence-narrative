@@ -6,6 +6,9 @@ from pydantic_ai import Agent, RunContext
 from pydantic import BaseModel, Field
 from pydantic_ai.models.openai import OpenAIModel
 from pydantic_ai.providers.openai import OpenAIProvider
+from pydantic_ai.mcp import MCPServerStdio
+import sys
+
 from typing import Any, Dict, List, Optional
 from story_seq.models import SequenceNarrative, BlastResult
 from story_seq.models import AnalysisConfig
@@ -50,7 +53,9 @@ async def get_reporter_agent(
     provider = OpenAIProvider(**provider_kwargs)
     llm_model = OpenAIModel(model_name, provider=provider)
     
-    mcp_servers = []
+    mcp_servers = [
+        MCPServerStdio(sys.executable, ['-m', 'paper_search_mcp.server'])
+    ]
     
     # Read instructions from static markdown file
     prompt_file = Path(__file__).parent / "static_reporter_agent_prompt.md"
