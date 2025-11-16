@@ -62,7 +62,7 @@ async def get_blast_agent(
         MCPServerStdio(sys.executable, ['-m', 'ncbi_mcp_server.server'],
                     env=env,  # explicitly pass environment variables
                     log_level="debug",
-                    read_timeout=900
+                    read_timeout=2600
         )
     ]
     
